@@ -1,0 +1,2 @@
+# 激活邮件过期时间
+ACTIVE_TOKEN_EXPIRED = 24*60*60
