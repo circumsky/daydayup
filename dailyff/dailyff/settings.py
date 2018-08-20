@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/1.8/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 import sys
@@ -133,3 +134,22 @@ EMAIL_HOST_USER = 'sunruijun728@163.com'
 EMAIL_HOST_PASSWORD = 'xiaohaizi533'
 #收件人看到的发件人
 EMAIL_FROM = 'A复仇者联盟<Avengers@fix.com>'
+
+
+# 设置缓存和session
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/1",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        }
+    }
+}
+
+# 配置session引擎
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+# 认证失败后的返回页面
+LOGIN_URL = '/users/login'

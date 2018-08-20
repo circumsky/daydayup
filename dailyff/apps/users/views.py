@@ -1,8 +1,11 @@
+from django.contrib.auth import authenticate, login, logout
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 from django.views.generic import View
 from django.shortcuts import render, redirect
-from users.models import User
+from users.models import User,Address
 import re
+
 from celery_task.tasks import send_active_email
 from django.conf import settings
 from itsdangerous import TimedJSONWebSignatureSerializer as TS
@@ -12,6 +15,8 @@ from utils import constants
 
 
 # Create your views here.
+from utils.commons import LoginRequiredMixin
+
 
 class RegisterUser(View):
     def get(self, request):
@@ -31,7 +36,7 @@ class RegisterUser(View):
         check = request.POST.get('allow')
 
         if not all([username,password,password2,email,check]):
-            return redirect(reversed('users:register'))
+            return redirect(reverse('users:register'))
 
         if password!=password2:
             return render(request, 'register.html', {"errmsg": "两次密码不一致"})
@@ -55,7 +60,7 @@ class RegisterUser(View):
 
         send_active_email.delay(username,active_url,email)
 
-        return HttpResponse('这个是首页')
+        return redirect(reverse("user:login"))
 
 
 class ActiveUser(View):
@@ -71,4 +76,84 @@ class ActiveUser(View):
         except Exception as e:
             return HttpResponse("链接无效")
 
-        return HttpResponse('登陆页面')
+        return redirect(reverse('users:login'))
+
+class LoginView(View):
+    def get(self,request):
+
+        return render(request,'login.html')
+
+    def post(self,request):
+
+        username = request.POST.get('username')
+        password = request.POST.get('pwd')
+
+        if not all([username, password]):
+            return render(request,'login.html',{'errmsg':"用户名或密码为空"})
+
+        user = authenticate(username=username, password=password)
+
+        if not user:
+            return render(request,'login.html', {'errmsg':'用户名或密码错误'})
+
+        if not user.is_active:
+            return render(request, 'login.html', {'errmsg': "用户未激活"})
+        # 用户登陆
+        login(request, user)
+
+        remember = request.POST.get('remember')
+
+        if remember != 'on':
+            request.session.set_expiry(0)
+        else:
+            request.session.set_expiry(None)
+        next_url = request.GET.get('next')
+        if next_url:
+            return redirect(next_url)
+
+        return redirect(reverse('goods:index'))
+
+
+class LogoutView(View):
+    def get(self,request):
+        logout(request)
+        return redirect(reverse('users:login'))
+
+
+class AddressView(LoginRequiredMixin, View):
+    def get(self,request):
+        user = request.user
+        try:
+            address = user.address_set.latest('update_time')
+            return render(request,'user_center_site.html',{"address":address})
+        except Exception as e:
+            return render(request,'user_center_site.html',{"address":None})
+
+    def post(self,request):
+        receiver_name = request.POST.get('receiver_name')
+        detail_addr = request.POST.get('detail_addr')
+        zip_code = request.POST.get('zip_code')
+        receiver_mobile = request.POST.get('receiver_mobile')
+
+        if not all([receiver_mobile,zip_code, detail_addr, receiver_name]):
+            return render(request,'user_center_site.html',{'errmsg':"信息填写不完整"})
+
+        user = request.user
+        # 保存数据至数据库中
+        # address = Address(user=user,receiver_name=receiver_name,receiver_mobile=receiver_mobile,detail_addr=detail_addr,
+        #                   zip_code=zip_code)
+        # address.save()
+        # 可以直接用create的方法,创建,省略保存的动作
+        Address.objects.create(
+            user=user,
+            receiver_name=receiver_name,
+            receiver_mobile=receiver_mobile,
+            detail_addr=detail_addr,
+            zip_code=zip_code
+
+        )
+        return redirect(reverse('users:address'))
+
+
+
+
