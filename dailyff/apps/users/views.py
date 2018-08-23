@@ -4,12 +4,14 @@ from django.http import HttpResponse
 from django.views.generic import View
 from django.shortcuts import render, redirect
 from users.models import User,Address
+from goods.models import GoodsSKU
 import re
 
 from celery_task.tasks import send_active_email
 from django.conf import settings
 from itsdangerous import TimedJSONWebSignatureSerializer as TS
 from utils import constants
+from django_redis import get_redis_connection
 
 
 
@@ -153,6 +155,32 @@ class AddressView(LoginRequiredMixin, View):
 
         )
         return redirect(reverse('users:address'))
+
+class InfoView(LoginRequiredMixin, View):
+    def get(self,request):
+        user = request.user
+        try:
+            address = user.address_set.latest('update_time')
+        except Exception as e:
+            address = None
+
+        redis_conn = get_redis_connection('default')
+        history_key = 'history_%s' % user.id
+        history = redis_conn.lrange(history_key,0,4)
+
+        sku_list = []
+        for i in history:
+            sku = GoodsSKU.objects.get(id=i)
+            sku_list.append(sku)
+
+        context = {
+            'address':address,
+            'sku_list': sku_list
+        }
+
+        return render(request,'user_center_info.html',context)
+
+
 
 
 

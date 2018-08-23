@@ -43,6 +43,7 @@ INSTALLED_APPS = (
     'goods',
     'orders',
     'carts',
+    'tinymce'
 )
 
 AUTH_USER_MODEL = 'users.User'
@@ -153,3 +154,16 @@ SESSION_CACHE_ALIAS = "default"
 
 # 认证失败后的返回页面
 LOGIN_URL = '/users/login'
+
+STORAGE_CLIENT_CONF = os.path.join(BASE_DIR,'utils/fastdfs_storage/client.conf')
+
+FASTDFS_NGINX_URL = 'http://192.168.249.152:8888/'
+
+DEFAULT_FILE_STORAGE = 'utils.fastdfs_storage.storage.MyStorage'
+
+# 富文本编辑器
+TINYMCE_DEFAULT_CONFIG = {
+    'theme': 'advanced',
+    'width':600,
+    'height':400
+}
