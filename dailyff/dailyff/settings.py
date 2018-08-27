@@ -157,7 +157,7 @@ LOGIN_URL = '/users/login'
 
 STORAGE_CLIENT_CONF = os.path.join(BASE_DIR,'utils/fastdfs_storage/client.conf')
 
-FASTDFS_NGINX_URL = 'http://192.168.249.152:8888/'
+FASTDFS_NGINX_URL = 'http://192.168.249.153:8888/'
 
 DEFAULT_FILE_STORAGE = 'utils.fastdfs_storage.storage.MyStorage'
 

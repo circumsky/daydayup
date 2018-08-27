@@ -1,2 +1,6 @@
 # 激活邮件过期时间
 ACTIVE_TOKEN_EXPIRED = 24*60*60
+# 主页数据保存时间
+INDEX_DATA_EXPIRED = 24*60*60
+# 详情页数据保存时间
+DETAIL_DATA_EXPIRED = 24*60*60
