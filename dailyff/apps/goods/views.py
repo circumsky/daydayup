@@ -1,3 +1,5 @@
+import json
+
 from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
@@ -11,8 +13,36 @@ from utils.constants import INDEX_DATA_EXPIRED,DETAIL_DATA_EXPIRED
 from orders.models import OrderGoods
 from django_redis import get_redis_connection
 
+class BaseView(View):
+    def get_cart_num(self,request):
+        if request.user.is_authenticated():
+            user = request.user
+            conn = get_redis_connection('default')
 
-class IndexView(View):
+            cart_info = conn.hgetall('cart_%s' % user.id)
+            cart_num = 0
+            if cart_info:
+                for num in cart_info.values():
+                    cart_num+= int(num)
+
+
+        else:
+            cart_info_str = request.COOKIES.get('cart_info')
+            cart_num = 0
+            if cart_info_str:
+                cart_info = json.loads(cart_info_str)
+
+                for num in cart_info.values():
+                    cart_num += int(num)
+
+        return cart_num
+
+
+
+
+
+
+class IndexView(BaseView):
     def get(self, request):
         # 需要获取的内容
         # 全部商品分类
@@ -39,13 +69,13 @@ class IndexView(View):
             }
             cache.set('index_data',context,INDEX_DATA_EXPIRED)
 
-        cart_num = 0
+        cart_num = self.get_cart_num(request)
         context['cart_num'] = cart_num
 
 
         return render(request,'index.html', context)
 
-class GoodDetailView(View):
+class GoodDetailView(BaseView):
     def get(self,request,sku_id):
         # 商品类别
         context = cache.get('detail_%s' % sku_id)
@@ -69,7 +99,7 @@ class GoodDetailView(View):
                 'comments':comments
             }
             cache.set('detail_%s' % sku_id,context,DETAIL_DATA_EXPIRED)
-        cart_num = 0
+        cart_num = self.get_cart_num(request)
         context['cart_num'] = cart_num
         user = request.user
         if user.is_authenticated:
@@ -82,7 +112,7 @@ class GoodDetailView(View):
 
         return render(request,'detail.html',context)
 
-class ListView(View):
+class ListView(BaseView):
     def get(self,request,category_id,page):
         # 排序方式
         sort = request.GET.get('sort','default')
@@ -130,7 +160,7 @@ class ListView(View):
             else:
                 page_num = list(range(page-2,page+3))
 
-        cart_num = 0
+        cart_num = self.get_cart_num(request)
         context = {
             'categories':categories,
             'category':category,

@@ -19,11 +19,13 @@ import users.urls
 import goods.urls
 import tinymce.urls
 import haystack.urls
+import carts.urls
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^users/', include(users.urls, namespace="users")),
     url(r'^', include(goods.urls, namespace="goods")),
+    url(r'^carts/', include(carts.urls, namespace="carts")),
     url(r'^tinymce/',include(tinymce.urls)),
     url(r'^search/',include(haystack.urls))
 ]

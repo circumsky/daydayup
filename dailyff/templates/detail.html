@@ -122,6 +122,19 @@
 
 	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
 	<script type="text/javascript">
+        $("#tag_detail").click(function(){
+			$("#tag_comment").removeClass("active");
+			$(this).addClass("active");
+			$("#tab_comment").hide();
+			$("#tab_detail").show();
+		});
+
+		$("#tag_comment").click(function(){
+			$("#tag_detail").removeClass("active");
+			$(this).addClass("active");
+			$("#tab_detail").hide();
+			$("#tab_comment").show();
+		});
 		var $add_x = $('#add_cart').offset().top;
 		var $add_y = $('#add_cart').offset().left;
 
@@ -130,16 +143,61 @@
 
 		$(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
 		$('#add_cart').click(function(){
-			$(".add_jump").stop().animate({
+
+		    var data = {
+		        sku_id:$(this).attr("sku_id"),
+                sku_count:$("#num_show").val(),
+                csrfmiddlewaretoken:'{{ csrf_token }}'
+
+
+            };
+		    $.post('/carts/add',data,function (ret) {
+		        if(ret.code==0){
+		            $(".add_jump").stop().animate({
 				'left': $to_y+7,
 				'top': $to_x+7},
 				"fast", function() {
 					$(".add_jump").fadeOut('fast',function(){
-						$('#show_count').html(2);
+						$('#show_count').html(ret.cart_num);
 					});
 
 			});
-		})
+
+                }
+                else{
+		            alert(ret.errmsg)
+                }
+
+
+
+
+            },"json");
+
+
+		});
+        $("#add").click(function () {
+			var num_show = $("#num_show").val();
+			num_show = parseInt(num_show)
+			num_show += 1;
+			$("#num_show").val(num_show);
+			var price = $(".show_pirze>em").html()
+			price = parseFloat(price);
+			var total = price * num_show;
+			$(".total>em").html(total.toFixed(2));
+		});
+		$("#minus").click(function () {
+			var num_show = $("#num_show").val();
+			num_show = parseInt(num_show)
+			num_show -= 1;
+			if (num_show < 1) {
+				num_show = 1;
+			}
+			$("#num_show").val(num_show);
+			var price = $(".show_pirze>em").html()
+			price = parseFloat(price);
+			var total = price * num_show;
+			$(".total>em").html(total.toFixed(2));
+		});
 	</script>
 	
 {% endblock %}
