@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}天天生鲜-搜索<{% endblock %}
+{% block center_detail %}
+
+	<div class="main_wrap clearfix">
+        <h3>"{{ query }}"的搜索结果如下:</h3>
+
+		<div class="r_wrap fr clearfix">
+			<ul class="goods_type_list clearfix">
+				{% for sku in page %}
+				<li>
+
+					<a href="{% url 'goods:detail' sku.object.id %}"><img src="{{ sku.object.default_image.url }}"></a>
+					<h4><a href="{% url 'goods:detail' sku.object.id %}">{{ sku.object.name }}</a></h4>
+					<div class="operate">
+						<span class="prize">￥{{ sku.object.price }}</span>
+						<span class="unit">{{ sku.object.price }}/{{ sku.object.unit }}</span>
+						<a href="#" class="add_goods" title="加入购物车"></a>
+					</div>
+				</li>
+                    {% empty %}
+                    没有您要查找的商品
+                {% endfor %}
+			</ul>
+
+			<div class="pagenation">
+                {% if page.has_previous %}
+				<a href="/search/?q={{ query }}&amp;page={{ page.previous_page_number }}">上一页</a>
+                {% endif %}
+
+                {% if page.has_next %}
+				<a href="/search/?q={{ query }}&amp;page={{ page.next_page_number }}">下一页></a>
+                {% endif %}
+			</div>
+		</div>
+	</div>
+
+{% endblock %}
+
+
+{% block bottom %}{% endblock %}

@@ -1,5 +1,7 @@
+from django.core.paginator import Paginator
+from django.core.urlresolvers import reverse
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 # Create your views here.
 from django.views.generic import View
@@ -79,3 +81,69 @@ class GoodDetailView(View):
 
 
         return render(request,'detail.html',context)
+
+class ListView(View):
+    def get(self,request,category_id,page):
+        # 排序方式
+        sort = request.GET.get('sort','default')
+        page = int(page)
+
+
+        categories = GoodsCategory.objects.all()
+        try:
+            category = GoodsCategory.objects.get(id=category_id)
+        except Exception as e:
+            return redirect(reverse('goods:index'))
+
+        # 新品推荐
+        new_goods = GoodsSKU.objects.filter(category=category).order_by('-create_time')[:2]
+
+        # 排序方式返回结果
+        if sort == 'price':
+            skus = GoodsSKU.objects.filter(category=category).order_by('price')
+            # print(skus)
+        elif sort == 'sale':
+            skus = GoodsSKU.objects.filter(category=category).order_by('-sales')
+            # print(skus)
+        else:
+            skus = GoodsSKU.objects.filter(category=category).order_by('-create_time')
+            # print(skus)
+
+        # 创建分页器对象
+        paginator = Paginator(skus,1)
+        # 获取当前页面的全部内容
+        try:
+            page_skus = paginator.page(page)
+        except Exception:
+            page = 1
+            page_skus = paginator.page(page)
+        # 显示页面列表
+
+        if paginator.num_pages <= 5:
+            print(paginator.page_range)
+            page_num = paginator.page_range
+        else:
+            if page <= 3:
+                page_num = list(range(1,6))
+            elif page >= (paginator.num_pages-2):
+                page_num = list(range(paginator.num_pages-4,paginator.num_pages+1))
+            else:
+                page_num = list(range(page-2,page+3))
+
+        cart_num = 0
+        context = {
+            'categories':categories,
+            'category':category,
+            'new_goods':new_goods,
+            'page_skus':page_skus,
+            'page_num':page_num,
+            'cart_num':cart_num,
+            'sort':sort
+        }
+
+        return render(request,'list.html',context)
+
+
+
+
+
